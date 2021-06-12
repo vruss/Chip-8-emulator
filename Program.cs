@@ -12,6 +12,8 @@ namespace Chip_8
 			emulator.LoadFont(Font.StandardFont);
 
 			emulator.PrintMemory();
+
+			emulator.Start();
 		}
 	}
 }
