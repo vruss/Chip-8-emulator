@@ -21,7 +21,7 @@ namespace Chip_8
 			window.SetFramerateLimit(60);
 
 			var emulator = new Chip8Emulator();
-			emulator.LoadRom("TestFiles/IBM_Logo.ch8");
+			emulator.LoadRom("TestFiles/test_opcode.ch8");
 			emulator.LoadFont(Font.StandardFont);
 
 			while (window.IsOpen)

@@ -46,10 +46,9 @@ namespace Chip_8.Emulator
 			this.Execute(instruction);
 		}
 
-		// TODO: Rework memory to work on bytes instead of shorts!
 		public void LoadRom(string fileName)
 		{
-			var fileBytes = File.ReadAllBytes("TestFiles/IBM_Logo.ch8");
+			var fileBytes = File.ReadAllBytes(fileName);
 
 			fileBytes.CopyTo(this.memory, ProgramOffset);
 		}
