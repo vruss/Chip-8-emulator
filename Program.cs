@@ -1,6 +1,7 @@
 ﻿using System;
 using Chip_8.Emulator;
 using SFML.Graphics;
+using SFML.System;
 using SFML.Window;
 using Font = Chip_8.Emulator.Font;
 
@@ -24,20 +25,21 @@ namespace Chip_8
 				emulator.Cycle();
 
 				var displayData = emulator.GetDisplayData();
+				var vertices = new VertexArray();
 
 				for (int y = 0; y < 32; y++)
 				{
 					for (int x = 0; x < 64; x++)
 					{
-						Console.Write(displayData[x, y]);
+						vertices.Append(new Vertex(new Vector2f(x, y), displayData[x, y] == 1
+							? Color.White
+							: Color.Black
+							)
+						);
 					}
-					Console.WriteLine();
 				}
 
-				Console.WriteLine();
-				Console.WriteLine();
-				Console.WriteLine();
-
+				window.Draw(vertices);
 
 				window.Display();
 			}
