@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Chip_8.Utilities;
 
 namespace Chip_8.Emulator
 {
-	public class Emulator
+	public class Chip8Emulator
 	{
 		private const ushort ProgramOffset = 0x200;
 		private const ushort FontOffset = 0x50;
+		private const byte ScreenWidth = 64;
+		private const byte ScreenHeight = 32;
 
 		// Registers and memory
-		private readonly ushort[] memory = new ushort[4096];
+		private readonly byte[] memory = new byte[4096];
 		private readonly Stack<ushort> stack = new(16); // used to call subroutines/functions and return from them
 		private readonly byte[] registers = new byte[16]; // general-purpose variable registers
 		private ushort indexRegister; // point at locations in memory
@@ -27,34 +28,29 @@ namespace Chip_8.Emulator
 		// High-level working environment
 		private bool shouldQuit;
 		private ushort encodedInstruction;
+		private readonly byte[,] displayBytes = new byte[ScreenWidth, ScreenHeight];
 
-		public Emulator()
+		public Chip8Emulator()
 		{
 			this.programCounter = ProgramOffset;
 		}
 
 		// Fetch -> Decode -> Execute loop
-		public void Start()
+		public void Cycle()
 		{
-			while (!this.shouldQuit)
-			{
-				this.encodedInstruction = this.Fetch();
+			this.encodedInstruction = this.Fetch();
 
-				var instruction = this.Decode();
+			var instruction = this.Decode();
 
-				this.Execute(instruction);
-			}
+			this.Execute(instruction);
 		}
+
 		// TODO: Rework memory to work on bytes instead of shorts!
 		public void LoadRom(string fileName)
 		{
 			var fileBytes = File.ReadAllBytes("TestFiles/IBM_Logo.ch8");
 
-			var instructions = fileBytes
-				.SelectTwo((b1, b2) => BitConverter.ToUInt16(new[] { b2, b1 }))
-				.ToArray();
-
-			instructions.CopyTo(this.memory, ProgramOffset);
+			fileBytes.CopyTo(this.memory, ProgramOffset);
 		}
 
 		public void LoadFont(byte[] font)
@@ -62,10 +58,17 @@ namespace Chip_8.Emulator
 			font.CopyTo(this.memory, FontOffset);
 		}
 
+		public byte[,] GetDisplayData()
+		{
+			return this.displayBytes;
+		}
+
 		// Fetch the instruction from memory at the current program counter
 		public ushort Fetch()
 		{
-			return this.memory[this.programCounter++];
+			var b1 = this.memory[this.programCounter++];
+			var b2 = this.memory[this.programCounter++];
+			return BitConverter.ToUInt16(new[] { b2, b1 });
 		}
 
 		// Decode the instruction to find out what the emulator should do
@@ -85,17 +88,22 @@ namespace Chip_8.Emulator
 					this.CLS();
 					break;
 				case Instruction.RET:
+					this.RET();
 					break;
 				case Instruction.JP_addr:
 					this.JP_addr();
 					break;
 				case Instruction.CALL_addr:
+					this.Call_addr();
 					break;
 				case Instruction.SE_Vx_byte:
+					this.SE_Vx_byte();
 					break;
 				case Instruction.SNE_Vx_byte:
+					this.SNE_Vx_byte();
 					break;
 				case Instruction.SE_Vx_Vy:
+					this.SE_Vx_Vy();
 					break;
 				case Instruction.LD_Vx_byte:
 					this.LD_Vx_byte();
@@ -166,7 +174,25 @@ namespace Chip_8.Emulator
 		/// </summary>
 		private void CLS()
 		{
-			Console.WriteLine("Clear screen");
+			for (int y = 0; y < 32; y++)
+			{
+				for (int x = 0; x < 64; x++)
+				{
+					this.displayBytes[x, y] = 0;
+				}
+			}
+		}
+
+		/// <summary>
+		/// 00EE - RET
+		/// Return from a subroutine.
+		///
+		///	The interpreter sets the program counter to the address at the top of the stack,
+		/// then subtracts 1 from the stack pointer.
+		/// </summary>
+		private void RET()
+		{
+			this.programCounter = this.stack.Pop();
 		}
 
 		/// <summary>
@@ -181,6 +207,72 @@ namespace Chip_8.Emulator
 		}
 
 		/// <summary>
+		/// 2nnn - CALL addr
+		/// Call subroutine at nnn.
+		///
+		///	The interpreter increments the stack pointer,
+		/// then puts the current PC on the top of the stack.
+		/// The PC is then set to nnn.
+		/// </summary>
+		private void Call_addr()
+		{
+			var nnn = BitHelper.Get_nnn(this.encodedInstruction);
+			this.stack.Push(this.programCounter);
+			this.programCounter = nnn;
+		}
+
+		/// <summary>
+		/// 3xkk - SE Vx, byte
+		/// Skip next instruction if Vx = kk.
+		///
+		/// The interpreter compares register Vx to kk, and if they are equal,
+		/// increments the program counter by 2.
+		/// </summary>
+		private void SE_Vx_byte()
+		{
+			var Vx = this.registers[BitHelper.Get_x(this.encodedInstruction)];
+			var kk = BitHelper.Get_kk(this.encodedInstruction);
+			if (Vx == kk)
+			{
+				this.programCounter += 2;
+			}
+		}
+
+		/// <summary>
+		/// 4xkk - SNE Vx, byte
+		/// Skip next instruction if Vx != kk.
+		///
+		///	The interpreter compares register Vx to kk, and if they are not equal,
+		/// increments the program counter by 2.
+		/// </summary>
+		private void SNE_Vx_byte()
+		{
+			var Vx = this.registers[BitHelper.Get_x(this.encodedInstruction)];
+			var kk = BitHelper.Get_kk(this.encodedInstruction);
+			if (Vx != kk)
+			{
+				this.programCounter += 2;
+			}
+		}
+
+		/// <summary>
+		/// 5xy0 - SE Vx, Vy
+		/// Skip next instruction if Vx = Vy.
+		///
+		///	The interpreter compares register Vx to register Vy, and if they are equal,
+		/// increments the program counter by 2.
+		/// </summary>
+		private void SE_Vx_Vy()
+		{
+			var Vx = this.registers[BitHelper.Get_x(this.encodedInstruction)];
+			var Vy = this.registers[BitHelper.Get_y(this.encodedInstruction)];
+			if (Vx == Vy)
+			{
+				this.programCounter += 2;
+			}
+		}
+
+		/// <summary>
 		/// 6xkk - LD Vx, byte
 		/// Set Vx = kk.
 		///
@@ -188,7 +280,7 @@ namespace Chip_8.Emulator
 		/// </summary>
 		private void LD_Vx_byte()
 		{
-			var Vx = BitHelper.Get_y(this.encodedInstruction);
+			var Vx = BitHelper.Get_x(this.encodedInstruction);
 			var kk = BitHelper.Get_kk(this.encodedInstruction);
 			this.registers[Vx] = kk;
 		}
@@ -201,7 +293,7 @@ namespace Chip_8.Emulator
 		/// </summary>
 		private void ADD_Vx_byte()
 		{
-			var Vx = BitHelper.Get_y(this.encodedInstruction);
+			var Vx = BitHelper.Get_x(this.encodedInstruction);
 			var kk = BitHelper.Get_kk(this.encodedInstruction);
 			this.registers[Vx] = (byte)(this.registers[Vx] + kk);
 		}
@@ -230,10 +322,62 @@ namespace Chip_8.Emulator
 		/// </summary>
 		private void DRW_Vx_Vy_nibble()
 		{
-			Console.WriteLine("Draw to screen");
+			var x = BitHelper.Get_x(this.encodedInstruction);
+			var y = BitHelper.Get_y(this.encodedInstruction);
+			var n = BitHelper.Get_n(this.encodedInstruction);
+
+			// Coordinates
+			var X = this.registers[x] % ScreenWidth;
+			var Y = this.registers[y] % ScreenHeight;
+
+			// Collision state to 0
+			this.registers[0xF] = 0;
+
+			// Get n sprite rows
+			for (var i = 0; i < n; i++)
+			{
+				// Reset X back to start coordinate of sprite row
+				X = this.registers[x] % ScreenWidth;
+
+				var spriteRow = this.memory[this.indexRegister + i];
+				for (var bit = 8; bit > 0; bit--)
+				{
+					// Get current pixel from display and sprite bit
+					var currentPixel = this.displayBytes[X, Y];
+					var spriteBit = spriteRow >> bit & 0b1;
+
+					// If current pixel and sprite bit is on,
+					// turn of the pixel and set collision state to 1
+					if (currentPixel == 1 && spriteBit == 1)
+					{
+						this.displayBytes[X, Y] = 0;
+						this.registers[0xF] = 1;
+					}
+					else if (currentPixel == 0 && spriteBit == 1)
+					{
+						this.displayBytes[X, Y] = 1;
+					}
+
+					X++;
+
+					// Stop drawing the sprite row if we're at the end of the display
+					if (X == ScreenWidth)
+					{
+						break;
+					}
+				}
+
+				Y++;
+
+				// Stop drawing the sprite height if we're at the end of the display.
+				if (Y == ScreenHeight)
+				{
+					break;
+				}
+			}
 		}
 
-		public void PrintMemory(ushort start = 0, ushort end = ushort.MaxValue)
+		public void PrintMemory(byte start = 0, byte end = byte.MaxValue)
 		{
 			Console.WriteLine("Start of Chip-8 RAM");
 
