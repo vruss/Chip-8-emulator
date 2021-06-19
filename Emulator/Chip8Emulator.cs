@@ -112,22 +112,31 @@ namespace Chip_8.Emulator
 					this.ADD_Vx_byte();
 					break;
 				case Instruction.LD_Vx_Vy:
+					this.LD_Vx_Vy();
 					break;
 				case Instruction.OR_Vx_Vy:
+					this.OR_Vx_Vy();
 					break;
 				case Instruction.AND_Vx_Vy:
+					this.AND_Vx_Vy();
 					break;
 				case Instruction.XOR_Vx_Vy:
+					this.XOR_Vx_Vy();
 					break;
 				case Instruction.ADD_Vx_Vy:
+					this.ADD_Vx_Vy();
 					break;
 				case Instruction.SUB_Vx_Vy:
+					this.SUB_Vx_Vy();
 					break;
 				case Instruction.SHR_Vx_Vy:
+					this.SHR_Vx_Vy();
 					break;
 				case Instruction.SUBN_Vx_Vy:
+					this.SUBN_Vx_Vy();
 					break;
 				case Instruction.SHL_Vx_Vy:
+					this.SHL_Vx_Vy();
 					break;
 				case Instruction.SNE_Vx_Vy:
 					break;
@@ -274,9 +283,145 @@ namespace Chip_8.Emulator
 		/// </summary>
 		private void LD_Vx_byte()
 		{
-			var Vx = BitHelper.Get_x(this.encodedInstruction);
+			var x = BitHelper.Get_x(this.encodedInstruction);
 			var kk = BitHelper.Get_kk(this.encodedInstruction);
-			this.registers[Vx] = kk;
+			this.registers[x] = kk;
+		}
+
+		/// <summary>
+		/// 8xy0 - LD Vx, Vy
+		/// Set Vx = Vy.
+		///
+		/// Stores the value of register Vy in register Vx.
+		/// </summary>
+		private void LD_Vx_Vy()
+		{
+			var Vy = this.registers[BitHelper.Get_y(this.encodedInstruction)];
+			this.registers[BitHelper.Get_x(this.encodedInstruction)] = Vy;
+		}
+
+		/// <summary>
+		/// 8xy1 - OR Vx, Vy
+		/// Set Vx = Vx OR Vy.
+		///
+		/// Performs a bitwise OR on the values of Vx and Vy, then stores the result in Vx.
+		/// A bitwise OR compares the corresponding bits from two values,
+		/// and if either bit is 1, then the same bit in the result is also 1. Otherwise, it is 0.
+		/// </summary>
+		private void OR_Vx_Vy()
+		{
+			var Vy = this.registers[BitHelper.Get_y(this.encodedInstruction)];
+			this.registers[BitHelper.Get_x(this.encodedInstruction)] |= Vy;
+		}
+
+		/// <summary>
+		/// 8xy2 - AND Vx, Vy
+		/// Set Vx = Vx AND Vy.
+		///
+		/// Performs a bitwise AND on the values of Vx and Vy, then stores the result in Vx.
+		/// A bitwise AND compares the corresponding bits from two values, and if both bits are 1,
+		/// then the same bit in the result is also 1. Otherwise, it is 0.
+		///
+		/// </summary>
+		private void AND_Vx_Vy()
+		{
+			var Vy = this.registers[BitHelper.Get_y(this.encodedInstruction)];
+			this.registers[BitHelper.Get_x(this.encodedInstruction)] &= Vy;
+		}
+
+		/// <summary>
+		/// 8xy3 - XOR Vx, Vy
+		/// Set Vx = Vx XOR Vy.
+		///
+		///	Performs a bitwise exclusive OR on the values of Vx and Vy, then stores the result in Vx.
+		/// An exclusive OR compares the corresponding bits from two values, and if the bits are not both the same,
+		/// then the corresponding bit in the result is set to 1. Otherwise, it is 0.
+		/// </summary>
+		private void XOR_Vx_Vy()
+		{
+			var Vy = this.registers[BitHelper.Get_y(this.encodedInstruction)];
+			this.registers[BitHelper.Get_x(this.encodedInstruction)] ^= Vy;
+		}
+
+		/// <summary>
+		/// 8xy4 - ADD Vx, Vy
+		/// Set Vx = Vx + Vy, set VF = carry.
+		///
+		///	The values of Vx and Vy are added together.
+		/// If the result is greater than 8 bits (i.e., > 255,) VF is set to 1, otherwise 0.
+		/// Only the lowest 8 bits of the result are kept, and stored in Vx.
+		/// </summary>
+		private void ADD_Vx_Vy()
+		{
+			var Vx = this.registers[BitHelper.Get_x(this.encodedInstruction)];
+			var Vy = this.registers[BitHelper.Get_y(this.encodedInstruction)];
+
+			var sum = Vx + Vy;
+			this.registers[0xF] = (byte)(sum > 255 ? 1 : 0);
+
+			this.registers[BitHelper.Get_x(this.encodedInstruction)] = (byte)(sum & 0xFF);
+		}
+
+		/// <summary>
+		/// 8xy5 - SUB Vx, Vy
+		/// Set Vx = Vx - Vy, set VF = NOT borrow.
+		///
+		///	If Vx > Vy, then VF is set to 1, otherwise 0.
+		/// Then Vy is subtracted from Vx, and the results stored in Vx.
+		/// </summary>
+		private void SUB_Vx_Vy()
+		{
+			var Vx = this.registers[BitHelper.Get_x(this.encodedInstruction)];
+			var Vy = this.registers[BitHelper.Get_y(this.encodedInstruction)];
+
+			this.registers[0xF] = (byte)(Vx > Vy ? 1 : 0);
+			this.registers[BitHelper.Get_x(this.encodedInstruction)] -= Vy;
+		}
+
+		/// <summary>
+		/// 8xy6 - SHR Vx {, Vy}
+		/// Set Vx = Vx SHR 1.
+		///
+		/// If the least-significant bit of Vx is 1, then VF is set to 1, otherwise 0.
+		/// Then Vx is divided by 2.
+		/// </summary>
+		private void SHR_Vx_Vy()
+		{
+			var Vx = this.registers[BitHelper.Get_x(this.encodedInstruction)];
+
+			this.registers[0xF] = (byte)((Vx & 0x1) == 1 ? 1 : 0);
+			this.registers[BitHelper.Get_x(this.encodedInstruction)] /= 2;
+		}
+
+		/// <summary>
+		/// 8xy7 - SUBN Vx, Vy
+		/// Set Vx = Vy - Vx, set VF = NOT borrow.
+		///
+		///	If Vy > Vx, then VF is set to 1, otherwise 0.
+		/// Then Vx is subtracted from Vy, and the results stored in Vx.
+		/// </summary>
+		private void SUBN_Vx_Vy()
+		{
+			var Vx = this.registers[BitHelper.Get_x(this.encodedInstruction)];
+			var Vy = this.registers[BitHelper.Get_y(this.encodedInstruction)];
+
+			this.registers[0xF] = (byte)(Vy > Vx ? 1 : 0);
+			this.registers[BitHelper.Get_x(this.encodedInstruction)] = (byte)(Vy - Vx);
+		}
+
+		/// <summary>
+		/// 8xyE - SHL Vx {, Vy}
+		/// Set Vx = Vx SHL 1.
+		///
+		/// If the most-significant bit of Vx is 1, then VF is set to 1, otherwise to 0.
+		/// Then Vx is multiplied by 2.
+		/// </summary>
+		private void SHL_Vx_Vy()
+		{
+			var Vx = this.registers[BitHelper.Get_x(this.encodedInstruction)];
+
+			this.registers[0xF] = (byte)(Vx >> 7 & 0x1);
+			this.registers[BitHelper.Get_x(this.encodedInstruction)] *= 2;
 		}
 
 		/// <summary>
