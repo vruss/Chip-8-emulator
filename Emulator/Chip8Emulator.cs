@@ -7,10 +7,11 @@ namespace Chip_8.Emulator
 {
 	public class Chip8Emulator
 	{
+		public const byte ScreenWidth = 64;
+		public const byte ScreenHeight = 32;
+
 		private const ushort ProgramOffset = 0x200;
 		private const ushort FontOffset = 0x50;
-		private const byte ScreenWidth = 64;
-		private const byte ScreenHeight = 32;
 
 		// Registers and memory
 		private readonly byte[] memory = new byte[4096];
@@ -174,13 +175,7 @@ namespace Chip_8.Emulator
 		/// </summary>
 		private void CLS()
 		{
-			for (int y = 0; y < 32; y++)
-			{
-				for (int x = 0; x < 64; x++)
-				{
-					this.displayBytes[x, y] = 0;
-				}
-			}
+			this.displayBytes.Initialize();
 		}
 
 		/// <summary>
@@ -340,7 +335,7 @@ namespace Chip_8.Emulator
 				X = this.registers[x] % ScreenWidth;
 
 				var spriteRow = this.memory[this.indexRegister + i];
-				for (var bit = 8; bit > 0; bit--)
+				for (var bit = 7; bit >= 0; bit--)
 				{
 					// Get current pixel from display and sprite bit
 					var currentPixel = this.displayBytes[X, Y];

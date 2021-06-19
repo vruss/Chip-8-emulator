@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using Chip_8.Emulator;
 using SFML.Graphics;
 using SFML.System;
@@ -11,7 +11,13 @@ namespace Chip_8
 	{
 		static void Main(string[] args)
 		{
-			var window = new RenderWindow(new VideoMode(64, 32, 1), "Chip-8 Emulator");
+			const int scaleFactor = 30;
+
+			var window = new RenderWindow(new VideoMode(Chip8Emulator.ScreenWidth * scaleFactor
+					, Chip8Emulator.ScreenHeight * scaleFactor, 1
+				)
+				, "Chip-8 Emulator"
+			);
 			window.SetFramerateLimit(60);
 
 			var emulator = new Chip8Emulator();
@@ -25,23 +31,36 @@ namespace Chip_8
 				emulator.Cycle();
 
 				var displayData = emulator.GetDisplayData();
-				var vertices = new VertexArray();
+				var vertices = CreateVertices(displayData);
 
-				for (int y = 0; y < 32; y++)
+				foreach (var vertex in vertices)
 				{
-					for (int x = 0; x < 64; x++)
+					window.Draw(vertex);
+				}
+
+				window.Display();
+			}
+
+			IEnumerable<RectangleShape> CreateVertices(byte[,] displayData)
+			{
+				var vertices = new List<RectangleShape>();
+
+				for (var y = 0; y < Chip8Emulator.ScreenHeight; y++)
+				{
+					for (var x = 0; x < Chip8Emulator.ScreenWidth; x++)
 					{
-						vertices.Append(new Vertex(new Vector2f(x, y), displayData[x, y] == 1
-							? Color.White
-							: Color.Black
-							)
-						);
+						var vertex = new RectangleShape(new Vector2f(scaleFactor, scaleFactor))
+						{
+							Position = new Vector2f(x * scaleFactor, y * scaleFactor),
+							FillColor = displayData[x, y] == 1
+								? Color.White
+								: Color.Black,
+						};
+						vertices.Add(vertex);
 					}
 				}
 
-				window.Draw(vertices);
-
-				window.Display();
+				return vertices;
 			}
 		}
 	}
