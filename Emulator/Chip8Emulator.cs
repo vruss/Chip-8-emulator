@@ -57,12 +57,17 @@ namespace Chip_8.Emulator
 			fileBytes.CopyTo(this.memory, ProgramOffset);
 		}
 
-		// Fetch the instruction from memory at the current program counter
+		// Fetch the next instruction from memory at the current program counter
 		private ushort Fetch()
 		{
 			var b1 = this.memory[this.programCounter++];
 			var b2 = this.memory[this.programCounter++];
-			return BitConverter.ToUInt16(new[] { b2, b1 });
+
+			// Always construct 16-bit instructions as big-endian
+			return BitConverter.ToUInt16(BitConverter.IsLittleEndian
+				? new[] { b2, b1 }
+				: new[] { b1, b2 }
+			);
 		}
 
 		// Decode the instruction to find out what the emulator should do
@@ -177,7 +182,13 @@ namespace Chip_8.Emulator
 		/// </summary>
 		private void CLS()
 		{
-			this.displayBytes.Initialize();
+			for (var y = 0; y < ScreenHeight; y++)
+			{
+				for (var x = 0; x < ScreenWidth; x++)
+				{
+					this.displayBytes[x, y] = 0;
+				}
+			}
 		}
 
 		/// <summary>
