@@ -34,16 +34,20 @@ namespace Chip_8.Emulator
 		public Chip8Emulator()
 		{
 			this.programCounter = ProgramOffset;
+
+			Font.StandardFont.CopyTo(this.memory, FontOffset);
 		}
 
-		// Fetch -> Decode -> Execute loop
-		public void Cycle()
+		public byte[,] GetNextFrame()
 		{
 			this.encodedInstruction = this.Fetch();
 
 			var instruction = this.Decode();
 
 			this.Execute(instruction);
+
+			// TODO: Cycle until we have new displayBytes to display to speed up emulation
+			return this.displayBytes;
 		}
 
 		public void LoadRom(string fileName)
@@ -53,18 +57,8 @@ namespace Chip_8.Emulator
 			fileBytes.CopyTo(this.memory, ProgramOffset);
 		}
 
-		public void LoadFont(byte[] font)
-		{
-			font.CopyTo(this.memory, FontOffset);
-		}
-
-		public byte[,] GetDisplayData()
-		{
-			return this.displayBytes;
-		}
-
 		// Fetch the instruction from memory at the current program counter
-		public ushort Fetch()
+		private ushort Fetch()
 		{
 			var b1 = this.memory[this.programCounter++];
 			var b2 = this.memory[this.programCounter++];
@@ -72,13 +66,13 @@ namespace Chip_8.Emulator
 		}
 
 		// Decode the instruction to find out what the emulator should do
-		public Instruction Decode()
+		private Instruction Decode()
 		{
 			return InstructionDecoder.DecodeInstruction(this.encodedInstruction);
 		}
 
 		// Execute the instruction and do what it tells you
-		public void Execute(Instruction instruction)
+		private void Execute(Instruction instruction)
 		{
 			switch (instruction)
 			{

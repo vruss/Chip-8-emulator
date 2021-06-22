@@ -3,7 +3,6 @@ using Chip_8.Emulator;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
-using Font = Chip_8.Emulator.Font;
 
 namespace Chip_8
 {
@@ -22,18 +21,14 @@ namespace Chip_8
 
 			var emulator = new Chip8Emulator();
 			emulator.LoadRom("TestFiles/test_opcode.ch8");
-			emulator.LoadFont(Font.StandardFont);
 
 			while (window.IsOpen)
 			{
 				window.Clear();
 
-				emulator.Cycle();
+				var frameData = emulator.GetNextFrame();
 
-				var displayData = emulator.GetDisplayData();
-				var vertices = CreateVertices(displayData);
-
-				foreach (var vertex in vertices)
+				foreach (var vertex in CreateVertices(frameData))
 				{
 					window.Draw(vertex);
 				}
