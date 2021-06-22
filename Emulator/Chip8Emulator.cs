@@ -29,11 +29,12 @@ namespace Chip_8.Emulator
 				var instruction = this.Decode();
 
 				// Execute the instruction
-				var hasNewFrame = instruction.Invoke(this.emulatorState);
+				instruction.Invoke(this.emulatorState);
 
 				// Keep executing until we have a new frame
-				if (hasNewFrame)
+				if (this.emulatorState.HasNewFrame)
 				{
+					this.emulatorState.HasNewFrame = false;
 					return this.emulatorState.DisplayBytes;
 				}
 			}
@@ -44,6 +45,7 @@ namespace Chip_8.Emulator
 			var fileBytes = File.ReadAllBytes(fileName);
 
 			fileBytes.CopyTo(this.emulatorState.Memory, ProgramOffset);
+			// TODO: Load emulator state from dump or something
 		}
 
 		// Fetch the next instruction from memory at the current program counter
@@ -60,7 +62,7 @@ namespace Chip_8.Emulator
 		}
 
 		// Decode the instruction to find out what the emulator should do
-		private Func<EmulatorState, bool> Decode()
+		private Action<EmulatorState> Decode()
 		{
 			return InstructionDecoder.DecodeInstruction(this.emulatorState.EncodedInstruction);
 		}

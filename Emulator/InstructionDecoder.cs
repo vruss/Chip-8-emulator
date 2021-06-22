@@ -4,7 +4,7 @@ namespace Chip_8.Emulator
 {
 	public static class InstructionDecoder
 	{
-		public static Func<EmulatorState, bool> DecodeInstruction(ushort encodedInstruction)
+		public static Action<EmulatorState> DecodeInstruction(ushort encodedInstruction)
 		{
 			return (encodedInstruction & 0xF000) switch
 			{

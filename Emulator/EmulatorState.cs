@@ -19,7 +19,10 @@ namespace Chip_8.Emulator
 
 		// High-level working environment
 		public ushort EncodedInstruction { get; set; } // the currently executing instruction
-		public byte[,] DisplayBytes { get; set; }	   // internal frame buffer for frame manipulation
+
+		// Display variables
+		public byte[,] DisplayBytes { get; set; } // internal frame buffer for frame manipulation
+		public bool HasNewFrame { get; set; }	  // indicates if the frame has been updated
 
 		public EmulatorState()
 		{
