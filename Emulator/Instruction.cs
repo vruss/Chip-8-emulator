@@ -1,4 +1,5 @@
-﻿using Chip_8.Utilities;
+﻿using System;
+using Chip_8.Utilities;
 
 namespace Chip_8.Emulator
 {
@@ -334,6 +335,12 @@ namespace Chip_8.Emulator
 		/// </summary>
 		public static void RND_Vx_byte(EmulatorState emulator)
 		{
+			var r = new Random();
+			var randomNumber = (byte)r.Next(0, 255);
+
+			var x = BitHelper.Get_x(emulator.EncodedInstruction);
+			var kk = BitHelper.Get_kk(emulator.EncodedInstruction);
+			emulator.Registers[x] = (byte)(randomNumber & kk);
 		}
 
 		/// <summary>
@@ -406,6 +413,13 @@ namespace Chip_8.Emulator
 			emulator.HasNewFrame = true;
 		}
 
+		/// <summary>
+		/// Ex9E - SKP Vx
+		/// Skip next instruction if key with the value of Vx is pressed.
+		///
+		///	Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position,
+		/// PC is increased by 2.
+		/// </summary>
 		public static void SKP_Vx(EmulatorState emulator)
 		{
 		}
