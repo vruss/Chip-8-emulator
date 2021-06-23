@@ -55,10 +55,7 @@ namespace Chip_8.Emulator
 			var b2 = this.emulatorState.Memory[this.emulatorState.ProgramCounter++];
 
 			// Always construct 16-bit instructions as big-endian
-			return BitConverter.ToUInt16(BitConverter.IsLittleEndian
-				? new[] { b2, b1 }
-				: new[] { b1, b2 }
-			);
+			return (ushort)(b1 << 8 | b2);
 		}
 
 		// Decode the instruction to find out what the emulator should do
