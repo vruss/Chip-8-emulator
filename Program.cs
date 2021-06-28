@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using Chip_8.Emulator;
 using SFML.Graphics;
 using SFML.System;
@@ -9,6 +10,8 @@ namespace Chip_8
 {
 	class Program
 	{
+		private static Chip8Emulator s_emulator;
+		
 		static void Main(string[] args)
 		{
 			// Scale-factor applied on screen-size and vertices 
@@ -27,8 +30,8 @@ namespace Chip_8
 			window.Closed += OnClosed;
 			window.KeyPressed += OnKeyPressed;
 
-			var emulator = new Chip8Emulator();
-			emulator.LoadRom("TestFiles/test_opcode.ch8");
+			s_emulator = new Chip8Emulator();
+			s_emulator.LoadRom("TestFiles/test_opcode.ch8");
 
 			while (window.IsOpen)
 			{
@@ -39,7 +42,7 @@ namespace Chip_8
 				// Clear the previous frame
 				window.Clear();
 
-				var frameData = emulator.GetNextFrame();
+				var frameData = s_emulator.GetNextFrame();
 
 				foreach (var vertex in CreateVertices(frameData, scaleFactor))
 				{
@@ -83,7 +86,38 @@ namespace Chip_8
 
 		private static void OnKeyPressed(object sender, KeyEventArgs e)
 		{
-			throw new NotImplementedException();
+			s_emulator.SendKey(GetEmulatorKey(e.Code));
+		}
+
+		/// <summary>
+		/// Returns a mapping of QWERTY into CHIP-8 ->
+		/// 1 	2 	3 	4
+		/// Q 	W 	E 	R
+		/// A 	S 	D 	F
+		/// Z 	X 	C 	V
+		/// </summary>
+		private static Key GetEmulatorKey(Keyboard.Key key)
+		{
+			return key switch
+			{
+				Keyboard.Key.Num1 => Key.Num1,
+				Keyboard.Key.Num2 => Key.Num2,
+				Keyboard.Key.Num3 => Key.Num3,
+				Keyboard.Key.Num4 => Key.C,
+				Keyboard.Key.Q => Key.Num4,
+				Keyboard.Key.W => Key.Num5,
+				Keyboard.Key.E => Key.Num6,
+				Keyboard.Key.R => Key.D,
+				Keyboard.Key.A => Key.Num7,
+				Keyboard.Key.S => Key.Num8,
+				Keyboard.Key.D => Key.Num9,
+				Keyboard.Key.F => Key.E,
+				Keyboard.Key.Z => Key.A,
+				Keyboard.Key.X => Key.Num0,
+				Keyboard.Key.C => Key.B,
+				Keyboard.Key.V => Key.F,
+				_ => Key.Invalid,
+			};
 		}
 	}
 }

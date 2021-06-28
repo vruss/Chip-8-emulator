@@ -20,7 +20,8 @@ namespace Chip_8.Emulator
 
 		public byte[,] GetNextFrame()
 		{
-			while (true)
+			// Return previous frame if we complete 1024 cycles without getting a new frame
+			for (var i = 0; i < 1024; i++)
 			{
 				// Get the next encoded instruction
 				this.emulatorState.EncodedInstruction = this.Fetch();
@@ -38,6 +39,8 @@ namespace Chip_8.Emulator
 					return this.emulatorState.DisplayBytes;
 				}
 			}
+
+			return this.emulatorState.DisplayBytes;
 		}
 
 		public void LoadRom(string fileName)
@@ -62,6 +65,11 @@ namespace Chip_8.Emulator
 		private Action<EmulatorState> Decode()
 		{
 			return InstructionDecoder.DecodeInstruction(this.emulatorState.EncodedInstruction);
+		}
+		
+		public void SendKey(Key key)
+		{
+			this.emulatorState.PressedKey = key;
 		}
 
 		public void PrintMemory(byte start = 0, byte end = byte.MaxValue)

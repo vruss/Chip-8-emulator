@@ -19,6 +19,7 @@ namespace Chip_8.Emulator
 
 		// High-level working environment
 		public ushort EncodedInstruction { get; set; } // the currently executing instruction
+		public Key PressedKey { get; set; }			   // the currently pressed key
 
 		// Display variables
 		public byte[,] DisplayBytes { get; set; } // internal frame buffer for frame manipulation
