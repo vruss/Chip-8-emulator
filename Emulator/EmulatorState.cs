@@ -1,14 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace Chip_8.Emulator
 {
 	public class EmulatorState
 	{
 		// Registers and memory
-		public byte[] Memory { get; }				// memory map of ROM and Font data
-		public Stack<ushort> Stack { get; }			// used to call subroutines/functions and return from them
-		public byte[] Registers { get; }			// general-purpose variable registers
-		public ushort IndexRegister { get; set; }	// point at locations in memory
+		public byte[] Memory { get; } // memory map of ROM and Font data
+		public Stack<ushort> Stack { get; } // used to call subroutines/functions and return from them
+		public byte[] Registers { get; } // general-purpose variable registers
+		public ushort IndexRegister { get; set; } // point at locations in memory
 
 		// Timers
 		public byte DelayTimer { get; set; } // decremented at a rate of 60 Hz (60 times per second) until it reaches 0
@@ -19,23 +21,41 @@ namespace Chip_8.Emulator
 
 		// High-level working environment
 		public ushort EncodedInstruction { get; set; } // the currently executing instruction
-		public Key PressedKey { get; set; }			   // the currently pressed key
+		public Key PressedKey { get; set; } // the currently pressed key
 
 		// Display variables
 		public byte[,] DisplayBytes { get; set; } // internal frame buffer for frame manipulation
-		public bool HasNewFrame { get; set; }	  // indicates if the frame has been updated
+		public bool HasNewFrame { get; set; } // indicates if the frame has been updated
 
 		public EmulatorState()
 		{
 			this.Memory = new byte[4096];
 			this.Stack = new Stack<ushort>(16);
 			this.Registers = new byte[16];
+			this.PressedKey = Key.None;
 
 			this.ProgramCounter = Chip8Emulator.ProgramOffset;
 
 			this.DisplayBytes = new byte[Chip8Emulator.ScreenWidth, Chip8Emulator.ScreenHeight];
 
 			Font.StandardFont.CopyTo(this.Memory, Chip8Emulator.FontOffset);
+
+			var timer = new Timer(DecrementTimers, this, TimeSpan.Zero, TimeSpan.FromMilliseconds(16.6));
+		}
+
+		private static void DecrementTimers(object o)
+		{
+			var state = (EmulatorState)o;
+
+			if (state.DelayTimer > 0)
+			{
+				state.DelayTimer--;
+			}
+
+			if (state.SoundTimer > 0)
+			{
+				state.SoundTimer--;
+			}
 		}
 	}
 }

@@ -29,6 +29,7 @@ namespace Chip_8
 			// Setup event handlers
 			window.Closed += OnClosed;
 			window.KeyPressed += OnKeyPressed;
+			window.KeyReleased += OnKeyReleased;
 
 			s_emulator = new Chip8Emulator();
 			s_emulator.LoadRom("TestFiles/test_opcode.ch8");
@@ -88,6 +89,11 @@ namespace Chip_8
 		{
 			s_emulator.SendKey(GetEmulatorKey(e.Code));
 		}
+		
+		private static void OnKeyReleased(object sender, KeyEventArgs e)
+		{
+			s_emulator.SendKey(Key.None);
+		}
 
 		/// <summary>
 		/// Returns a mapping of QWERTY into CHIP-8 ->
@@ -116,7 +122,7 @@ namespace Chip_8
 				Keyboard.Key.X => Key.Num0,
 				Keyboard.Key.C => Key.B,
 				Keyboard.Key.V => Key.F,
-				_ => Key.Invalid,
+				_ => Key.None,
 			};
 		}
 	}

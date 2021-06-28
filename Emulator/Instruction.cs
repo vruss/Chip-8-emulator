@@ -422,46 +422,165 @@ namespace Chip_8.Emulator
 		/// </summary>
 		public static void SKP_Vx(EmulatorState emulator)
 		{
+			var Vx = emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)];
+			if (Vx == (int)emulator.PressedKey)
+			{
+				emulator.ProgramCounter += 2;
+			}
 		}
 
+		/// <summary>
+		/// ExA1 - SKNP Vx
+		/// Skip next instruction if key with the value of Vx is not pressed.
+		///
+		///	Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position,
+		/// PC is increased by 2.
+		/// </summary>
 		public static void SKNP_Vx(EmulatorState emulator)
 		{
+			var Vx = emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)];
+			if (Vx != (int)emulator.PressedKey)
+			{
+				emulator.ProgramCounter += 2;
+			}
 		}
 
+		/// <summary>
+		/// Fx07 - LD Vx, DT
+		/// Set Vx = delay timer value.
+		///	
+		///	The value of DT is placed into Vx.
+		/// </summary>
+		/// <param name="emulator"></param>
 		public static void LD_Vx_DT(EmulatorState emulator)
 		{
+			emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)] = emulator.DelayTimer;
 		}
 
+		/// <summary>
+		/// Fx0A - LD Vx, K
+		/// Wait for a key press, store the value of the key in Vx.
+		///
+		///	All execution stops until a key is pressed, then the value of that key is stored in Vx.
+		/// </summary>
+		/// <param name="emulator"></param>
 		public static void LD_Vx_K(EmulatorState emulator)
 		{
+			if (emulator.PressedKey == Key.None)
+			{
+				emulator.ProgramCounter -= 2;
+				return;
+			}
+
+			emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)] = (byte)emulator.PressedKey;
 		}
 
+		/// <summary>
+		/// Fx15 - LD DT, Vx
+		/// Set delay timer = Vx.
+		///
+		///	DT is set equal to the value of Vx.
+		/// </summary>
+		/// <param name="emulator"></param>
 		public static void LD_DT_Vx(EmulatorState emulator)
 		{
+			var Vx = emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)];
+			emulator.DelayTimer = Vx;
 		}
 
+		/// <summary>
+		/// Fx18 - LD ST, Vx
+		/// Set sound timer = Vx.
+		///
+		///	ST is set equal to the value of Vx.
+		/// </summary>
+		/// <param name="emulator"></param>
 		public static void LD_ST_Vx(EmulatorState emulator)
 		{
+			var Vx = emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)];
+			emulator.SoundTimer = Vx;
 		}
 
+		/// <summary>
+		/// Fx1E - ADD I, Vx
+		///	Set I = I + Vx.
+		///
+		///	The values of I and Vx are added, and the results are stored in I.
+		/// </summary>
+		/// <param name="emulator"></param>
 		public static void ADD_I_Vx(EmulatorState emulator)
 		{
+			var Vx = emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)];
+			emulator.IndexRegister += Vx;
 		}
 
+		/// <summary>
+		/// Fx29 - LD F, Vx
+		/// Set I = location of sprite for digit Vx.
+		///
+		///	The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx.
+		/// </summary>
 		public static void LD_F_Vx(EmulatorState emulator)
 		{
+			var Vx = emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)];
+			var spriteDigit = Chip8Emulator.FontOffset + Vx;
+			
+			emulator.IndexRegister = (ushort)spriteDigit;
 		}
 
+		/// <summary>
+		/// Fx33 - LD B, Vx
+		/// Store BCD representation of Vx in memory locations I, I+1, and I+2.
+		///
+		/// The interpreter takes the decimal value of Vx,
+		/// and places the hundreds digit in memory at location in I,
+		/// the tens digit at location I+1,
+		/// and the ones digit at location I+2.
+		/// </summary>
 		public static void LD_B_Vx(EmulatorState emulator)
 		{
+			var Vx = emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)];
+
+			var hundredths = Vx % 1000 / 100;
+			var tenths = Vx % 100 / 10;
+			var ones = Vx % 10 / 1;
+
+			emulator.Memory[emulator.IndexRegister + 0] = (byte)hundredths;
+			emulator.Memory[emulator.IndexRegister + 1] = (byte)tenths;
+			emulator.Memory[emulator.IndexRegister + 2] = (byte)ones;
 		}
 
+		/// <summary>
+		/// Fx55 - LD [I], Vx
+		/// Store registers V0 through Vx in memory starting at location I.
+		///
+		///	The interpreter copies the values of registers V0 through Vx into memory,
+		/// starting at the address in I.
+		/// </summary>
 		public static void LD_I_Vx(EmulatorState emulator)
 		{
+			var x = BitHelper.Get_x(emulator.EncodedInstruction);
+
+			for (var i = 0; i <= x; i++)
+			{
+				emulator.Memory[emulator.IndexRegister + i] = emulator.Registers[i];
+			}
 		}
 
+		/// <summary>
+		/// Fx65 - LD Vx, [I]
+		/// Read registers V0 through Vx from memory starting at location I.
+		///
+		///	The interpreter reads values from memory starting at location I into registers V0 through Vx.
+		/// </summary>
 		public static void LD_Vx_I(EmulatorState emulator)
 		{
+			var x = BitHelper.Get_x(emulator.EncodedInstruction);
+
+			for (var i = 0; i <= x; i++)
+			{
+				emulator.Registers[i] = emulator.Memory[emulator.IndexRegister + i];
+			}
 		}
 	}
 }
