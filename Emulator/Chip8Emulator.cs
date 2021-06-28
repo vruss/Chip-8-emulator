@@ -10,6 +10,7 @@ namespace Chip_8.Emulator
 
 		internal const ushort ProgramOffset = 0x200;
 		internal const ushort FontOffset = 0x50;
+		internal const ushort FontSize = 0x5;
 
 		private readonly EmulatorState emulatorState;
 

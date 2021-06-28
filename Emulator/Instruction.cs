@@ -523,7 +523,7 @@ namespace Chip_8.Emulator
 		public static void LD_F_Vx(EmulatorState emulator)
 		{
 			var Vx = emulator.Registers[BitHelper.Get_x(emulator.EncodedInstruction)];
-			var spriteDigit = Chip8Emulator.FontOffset + Vx;
+			var spriteDigit = Chip8Emulator.FontOffset + Vx * Chip8Emulator.FontSize;
 			
 			emulator.IndexRegister = (ushort)spriteDigit;
 		}
