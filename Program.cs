@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using Chip_8.Emulator;
 using SFML.Graphics;
 using SFML.System;
@@ -23,6 +22,7 @@ namespace Chip_8
 			// Create the main window
 			var window = new RenderWindow(new VideoMode(screenWidth, screenHeight, 1)
 				, "Chip-8 Emulator"
+				, Styles.Titlebar | Styles.Close
 			);
 			window.SetFramerateLimit(60);
 

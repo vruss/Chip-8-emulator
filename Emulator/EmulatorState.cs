@@ -15,7 +15,7 @@ namespace Chip_8.Emulator
 		// Timers
 		public byte DelayTimer { get; set; } // decremented at a rate of 60 Hz (60 times per second) until it reaches 0
 		public byte SoundTimer { get; set; } // functions like the delay timer, but which also gives off a beeping sound as long as it’s not 0
-		private Timer timer { get; }
+		private Timer timer;
 		
 		// Pseudo-registers
 		public ushort ProgramCounter { get; set; } // points at the current instruction in memory

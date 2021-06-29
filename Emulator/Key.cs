@@ -2,7 +2,7 @@
 {
 	public enum Key
 	{
-		None = int.MaxValue, 
+		None = int.MinValue, 
 		Num0 = 0,
 		Num1 = 1,
 		Num2 = 2,
